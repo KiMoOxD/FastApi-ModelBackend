@@ -9,3 +9,4 @@ setuptools==68.2.0
 wheel==0.41.2
 scikit-learn==1.2.2
 xgboost==2.1.1
+category_encoders==2.6.3

@@ -6,3 +6,4 @@ pandas==1.5.3
 Shapely==2.0.6
 numpy==1.24.3
 setuptools==68.2.0
+wheel==0.41.2

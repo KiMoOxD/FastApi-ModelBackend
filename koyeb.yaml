@@ -1,1 +1,1 @@
-services:  - name: fastapi-modelbackend    build:      context: .    environment:      - name: PYTHON_VERSION        value: "3.10.2"    ports:      - port: 8000
+

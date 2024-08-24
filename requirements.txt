@@ -1,4 +1,5 @@
 fastapi==0.112.2
+uvicorn==0.22.0
 googlemaps==4.10.0
 pandas==1.5.3
 pydantic==2.8.2

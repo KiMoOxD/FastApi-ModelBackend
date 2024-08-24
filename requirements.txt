@@ -23,3 +23,4 @@ black==21.7b0
 flake8==3.9.2
 mypy==0.910
 shapely==1.7.1
+setuptools==58.0.0

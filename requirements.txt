@@ -24,3 +24,5 @@ flake8==3.9.2
 mypy==0.910
 shapely==1.7.1
 setuptools==58.0.0
+pip==23.1.2
+

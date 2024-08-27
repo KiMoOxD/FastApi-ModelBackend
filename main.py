@@ -3,13 +3,11 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import pickle
 import pandas as pd
-import numpy as np
 import googlemaps
 from shapely import wkt
 from shapely.geometry import Polygon
 
 df = pd.read_csv('taxi_zone_geo.csv')
-merged = pd.read_csv('merged_data.csv')
 
 app = FastAPI()
 
@@ -97,148 +95,6 @@ async def receive_data(item: Item):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error calculating duration: {e}")
 
-    def Duration(origin, destination):
-        # Case 1: Exact match of origin and destination
-        condition1 = merged[(merged['pulocationid'] == origin) & (merged['dolocationid'] == destination)]
-        mean_duration1 = condition1['duration_seconds'].mean()
-        if not np.isnan(mean_duration1):
-            return round(mean_duration1, 2)
-
-        # Case 2: Match by pickup and dropoff zone
-        pickup_zone_data = merged[merged['pulocationid'] == origin]
-        dropoff_zone_data = merged[merged['dolocationid'] == destination]
-        
-        if not pickup_zone_data.empty and not dropoff_zone_data.empty:
-            pickup_zone = pickup_zone_data['pickup_zone'].iloc[0]
-            dropoff_zone = dropoff_zone_data['dropoff_zone'].iloc[0]
-            
-            condition2 = merged[(merged['pickup_zone'] == pickup_zone) & (merged['dropoff_zone'] == dropoff_zone)]
-            mean_duration2 = condition2['duration_seconds'].mean()
-            
-            if not np.isnan(mean_duration2):
-                return round(mean_duration2, 2)
-
-        # Case 3: Match by pickup and dropoff borough
-        pickup_borough_data = merged[merged['pulocationid'] == origin]
-        dropoff_borough_data = merged[merged['dolocationid'] == destination]
-        
-        if not pickup_borough_data.empty and not dropoff_borough_data.empty:
-            pickup_borough = pickup_borough_data['pickup_borough'].iloc[0]
-            dropoff_borough = dropoff_borough_data['dropoff_borough'].iloc[0]
-            
-            condition3 = merged[(merged['pickup_borough'] == pickup_borough) & (merged['dropoff_borough'] == dropoff_borough)]
-            mean_duration3 = condition3['duration_seconds'].mean()
-            
-            if not np.isnan(mean_duration3):
-                return round(mean_duration3, 2)
-        
-        # Case 4: Incremental search to find the nearest valid origin and destination
-        max_increment = 10  # Limit to prevent infinite loops
-        for i in range(1, max_increment + 1):
-            # Increment origin, keep destination constant
-            new_origin = origin + i
-            condition4 = merged[(merged['pulocationid'] == new_origin) & (merged['dolocationid'] == destination)]
-            mean_duration4 = condition4['duration_seconds'].mean()
-            if not np.isnan(mean_duration4):
-                return round(mean_duration4, 2)
-            
-            # Decrement origin, keep destination constant
-            new_origin = origin - i
-            if new_origin > 0:
-                condition4 = merged[(merged['pulocationid'] == new_origin) & (merged['dolocationid'] == destination)]
-                mean_duration4 = condition4['duration_seconds'].mean()
-                if not np.isnan(mean_duration4):
-                    return round(mean_duration4, 2)
-            
-            # Increment destination, keep origin constant
-            new_destination = destination + i
-            condition4 = merged[(merged['pulocationid'] == origin) & (merged['dolocationid'] == new_destination)]
-            mean_duration4 = condition4['duration_seconds'].mean()
-            if not np.isnan(mean_duration4):
-                return round(mean_duration4, 2)
-            
-            # Decrement destination, keep origin constant
-            new_destination = destination - i
-            if new_destination > 0:
-                condition4 = merged[(merged['pulocationid'] == origin) & (merged['dolocationid'] == new_destination)]
-                mean_duration4 = condition4['duration_seconds'].mean()
-                if not np.isnan(mean_duration4):
-                    return round(mean_duration4, 2)
-
-        # Return overall mean duration rounded to 2 decimal places if none of the above conditions are met
-        return round(merged['duration_seconds'].mean(), 2)
-
-    def Distance(origin, destination):
-        # Case 1: Exact match of origin and destination
-        condition1 = merged[(merged['pulocationid'] == origin) & (merged['dolocationid'] == destination)]
-        mean_distance1 = condition1['trip_distance'].mean()
-        if not np.isnan(mean_distance1):
-            return round(mean_distance1, 2)
-
-        # Case 2: Match by pickup and dropoff zone
-        pickup_zone_data = merged[merged['pulocationid'] == origin]
-        dropoff_zone_data = merged[merged['dolocationid'] == destination]
-        
-        if not pickup_zone_data.empty and not dropoff_zone_data.empty:
-            pickup_zone = pickup_zone_data['pickup_zone'].iloc[0]
-            dropoff_zone = dropoff_zone_data['dropoff_zone'].iloc[0]
-            
-            condition2 = merged[(merged['pickup_zone'] == pickup_zone) & (merged['dropoff_zone'] == dropoff_zone)]
-            mean_distance2 = condition2['trip_distance'].mean()
-            
-            if not np.isnan(mean_distance2):
-                return round(mean_distance2, 2)
-
-        # Case 3: Match by pickup and dropoff borough
-        pickup_borough_data = merged[merged['pulocationid'] == origin]
-        dropoff_borough_data = merged[merged['dolocationid'] == destination]
-        
-        if not pickup_borough_data.empty and not dropoff_borough_data.empty:
-            pickup_borough = pickup_borough_data['pickup_borough'].iloc[0]
-            dropoff_borough = dropoff_borough_data['dropoff_borough'].iloc[0]
-            
-            condition3 = merged[(merged['pickup_borough'] == pickup_borough) & (merged['dropoff_borough'] == dropoff_borough)]
-            mean_distance3 = condition3['trip_distance'].mean()
-            
-            if not np.isnan(mean_distance3):
-                return round(mean_distance3, 2)
-        
-        # Case 4: Incremental search to find the nearest valid origin and destination
-        max_increment = 10  # Limit to prevent infinite loops
-        for i in range(1, max_increment + 1):
-            # Increment origin, keep destination constant
-            new_origin = origin + i
-            condition4 = merged[(merged['pulocationid'] == new_origin) & (merged['dolocationid'] == destination)]
-            mean_distance4 = condition4['trip_distance'].mean()
-            if not np.isnan(mean_distance4):
-                return round(mean_distance4, 2)
-            
-            # Decrement origin, keep destination constant
-            new_origin = origin - i
-            if new_origin > 0:
-                condition4 = merged[(merged['pulocationid'] == new_origin) & (merged['dolocationid'] == destination)]
-                mean_distance4 = condition4['trip_distance'].mean()
-                if not np.isnan(mean_distance4):
-                    return round(mean_distance4, 2)
-            
-            # Increment destination, keep origin constant
-            new_destination = destination + i
-            condition4 = merged[(merged['pulocationid'] == origin) & (merged['dolocationid'] == new_destination)]
-            mean_distance4 = condition4['trip_distance'].mean()
-            if not np.isnan(mean_distance4):
-                return round(mean_distance4, 2)
-            
-            # Decrement destination, keep origin constant
-            new_destination = destination - i
-            if new_destination > 0:
-                condition4 = merged[(merged['pulocationid'] == origin) & (merged['dolocationid'] == new_destination)]
-                mean_distance4 = condition4['trip_distance'].mean()
-                if not np.isnan(mean_distance4):
-                    return round(mean_distance4, 2)
-
-        # Return overall mean distance rounded to 2 decimal places if none of the above conditions are met
-        return round(merged['trip_distance'].mean(), 2)
-
     try:
         # Get WKT strings from DataFrame
         wkt_string1 = df.loc[df['zone_id'] == item.pulocationid, 'zone_geom'].values[0]
@@ -246,15 +102,9 @@ async def receive_data(item: Item):
     except IndexError:
         raise HTTPException(status_code=404, detail="PU or DO Location ID not found")
 
-
-    try:
-        # Calculate distance and duration
-        distance_miles, distance_kilometers = calculate_distance_miles(wkt_string1, wkt_string2)
-        duration_seconds, route_polyline = calculate_duration_seconds(wkt_string1, wkt_string2)
-    except:
-        duration_seconds = Duration(item.pulocationid, item.dolocationid)
-        distance_miles = Distance(item.pulocationid, item.dolocationid)
-        distance_kilometers = distance_miles * 1.60934
+    # Calculate distance and duration
+    distance_miles, distance_kilometers = calculate_distance_miles(wkt_string1, wkt_string2)
+    duration_seconds, route_polyline = calculate_duration_seconds(wkt_string1, wkt_string2)
 
     # Prepare the data for prediction
     new_data = pd.DataFrame([[

@@ -28,7 +28,8 @@ with open("preprocessor.pkl", "rb") as file:
     preprocessor = pickle.load(file)
 
 # Initialize the Google Maps client
-gmaps = googlemaps.Client(key='AIzaSyAA5cM-Rm3-BHKv3K6358sqnhn9w-c6C5Y')
+# gmaps = googlemaps.Client(key='AIzaSyAA5cM-Rm3-BHKv3K6358sqnhn9w-c6C5Y')
+gmaps = googlemaps.Client(key='AIzaSyBdHQ1oOykZ-Nu-MJ2DUwPWvpUtddz1R3A')
 
 class Item(BaseModel):
     vendorid: int
